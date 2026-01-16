@@ -95,21 +95,21 @@ endif()
 target_include_directories(psdk_vendor_c
     PRIVATE
         ${PSDK_C_MODULES_DIR}
-        ${PSDK_C_COMMON_DIR}
-        ${PSDK_C_HAL_DIR}
         ${PSDK_C_APP_DIR}
     PUBLIC
         ${PSDK_CORE_DIR}
+        ${PSDK_C_COMMON_DIR}
+        ${PSDK_C_HAL_DIR}
 )
 if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
     target_include_directories(psdk_vendor_cpp
         PRIVATE
             ${PSDK_CPP_MODULES_DIR}
-            ${PSDK_CPP_COMMON_DIR}
-            ${PSDK_CPP_HAL_DIR}
             ${PSDK_CPP_APP_DIR}
         PUBLIC
             ${PSDK_CORE_DIR}
+            ${PSDK_CPP_COMMON_DIR}
+            ${PSDK_CPP_HAL_DIR}
     )
 endif()
 
@@ -132,27 +132,31 @@ add_library(payloadsdk STATIC IMPORTED)
 set_target_properties(payloadsdk PROPERTIES
     IMPORTED_LOCATION "${PSDK_CORE_LIB_DIR}/libpayloadsdk.a"
 )
+set(PSDK_PAYLOADSDK_PATH
+  "${PSDK_CORE_LIB_DIR}/libpayloadsdk.a"
+  CACHE INTERNAL "DJI Payload SDK static library"
+)
 target_link_libraries(psdk_vendor_c
-    PRIVATE
+    PUBLIC
         payloadsdk
 )
 if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
     target_link_libraries(psdk_vendor_cpp
-        PRIVATE
+        PUBLIC
             payloadsdk
     )
 endif()
 
 # Link system libraries
 target_link_libraries(psdk_vendor_c
-    PRIVATE
+    PUBLIC
         pthread
         m
         usb-1.0
 )
 if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
     target_link_libraries(psdk_vendor_cpp
-        PRIVATE
+        PUBLIC
             pthread
             m
             usb-1.0
@@ -195,59 +199,55 @@ else()
     message(STATUS " - FFMPEG version: ${FFMPEG_MAJOR_VERSION}.x")
 endif()
 
-target_link_libraries(psdk_vendor_c PRIVATE ${FFMPEG_LIBRARIES})
-target_include_directories(psdk_vendor_c PRIVATE ${FFMPEG_INCLUDE_DIRS})
-target_compile_definitions(psdk_vendor_c PRIVATE FFMPEG_INSTALLED)
+target_link_libraries(psdk_vendor_c PUBLIC ${FFMPEG_LIBRARIES})
+target_include_directories(psdk_vendor_c PUBLIC ${FFMPEG_INCLUDE_DIRS})
+target_compile_definitions(psdk_vendor_c PUBLIC FFMPEG_INSTALLED)
 if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
-    target_link_libraries(psdk_vendor_cpp PRIVATE ${FFMPEG_LIBRARIES})
-    target_include_directories(psdk_vendor_cpp PRIVATE ${FFMPEG_INCLUDE_DIR})
-    target_compile_definitions(psdk_vendor_cpp PRIVATE FFMPEG_INSTALLED)
+    target_link_libraries(psdk_vendor_cpp PUBLIC ${FFMPEG_LIBRARIES})
+    target_include_directories(psdk_vendor_cpp PUBLIC ${FFMPEG_INCLUDE_DIRS})
+    target_compile_definitions(psdk_vendor_cpp PUBLIC FFMPEG_INSTALLED)
 endif ()
 
 pkg_check_modules(OPUS REQUIRED opus)
 message(STATUS "Found OPUS installed in the system")
 message(STATUS " - Includes: ${OPUS_INCLUDE_DIRS}")
-message(STATUS " - Libraries: ${OPUS_LIBRARY}")
+message(STATUS " - Libraries: ${OPUS_LIBRARIES}")
 
-target_link_libraries(psdk_vendor_c PRIVATE ${OPUS_LIBRARY})
-target_include_directories(psdk_vendor_c PRIVATE ${OPUS_INCLUDE_DIRS})
-target_compile_definitions(psdk_vendor_c PRIVATE OPUS_INSTALLED)
+target_link_libraries(psdk_vendor_c PUBLIC ${OPUS_LIBRARIES})
+target_include_directories(psdk_vendor_c PUBLIC ${OPUS_INCLUDE_DIRS})
+target_compile_definitions(psdk_vendor_c PUBLIC OPUS_INSTALLED)
 if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
-    target_link_libraries(psdk_vendor_cpp PRIVATE ${OPUS_LIBRARY})
-    target_include_directories(psdk_vendor_cpp PRIVATE ${OPUS_INCLUDE_DIRS})
-    target_compile_definitions(psdk_vendor_cpp PRIVATE OPUS_INSTALLED)
+    target_link_libraries(psdk_vendor_cpp PUBLIC ${OPUS_LIBRARIES})
+    target_include_directories(psdk_vendor_cpp PUBLIC ${OPUS_INCLUDE_DIRS})
+    target_compile_definitions(psdk_vendor_cpp PUBLIC OPUS_INSTALLED)
 endif ()
 
 pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
 message(STATUS "Found LIBUSB installed in the system")
 message(STATUS " - Includes: ${LIBUSB_INCLUDE_DIRS}")
-message(STATUS " - Libraries: ${LIBUSB_LIBRARY}")
+message(STATUS " - Libraries: ${LIBUSB_LIBRARIES}")
 
-target_link_libraries(psdk_vendor_c PRIVATE ${LIBUSB_LIBRARY})
-target_include_directories(psdk_vendor_c PRIVATE ${LIBUSB_INCLUDE_DIRS})
-target_compile_definitions(psdk_vendor_c PRIVATE LIBUSB_INSTALLED)
+target_link_libraries(psdk_vendor_c PUBLIC ${LIBUSB_LIBRARIES})
+target_include_directories(psdk_vendor_c PUBLIC ${LIBUSB_INCLUDE_DIRS})
+target_compile_definitions(psdk_vendor_c PUBLIC LIBUSB_INSTALLED)
 if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
-    target_link_libraries(psdk_vendor_cpp PRIVATE ${LIBUSB_LIBRARY})
-    target_include_directories(psdk_vendor_cpp PRIVATE ${LIBUSB_INCLUDE_DIR})   
-    target_compile_definitions(psdk_vendor_cpp PRIVATE LIBUSB_INSTALLED)
+    target_link_libraries(psdk_vendor_cpp PUBLIC ${LIBUSB_LIBRARIES})
+    target_include_directories(psdk_vendor_cpp PUBLIC ${LIBUSB_INCLUDE_DIRS})   
+    target_compile_definitions(psdk_vendor_cpp PUBLIC LIBUSB_INSTALLED)
 endif ()
 
 # Catkin package
-if (PSDK_PLATFORM STREQUAL "raspberry_pi")
-    catkin_package(
-        INCLUDE_DIRS psdk_core/psdk_lib/include
-        LIBRARIES psdk_vendor_c
-        # EXPORTED_TARGETS psdk_vendor_c
-    )
-endif()
-if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
-    catkin_package(
-        INCLUDE_DIRS psdk_core/psdk_lib/include
-        LIBRARIES 
-            psdk_vendor_c 
-            psdk_vendor_cpp
-    )
-endif()
+catkin_package(
+    INCLUDE_DIRS .
+    LIBRARIES 
+        psdk_vendor_c
+        payloadsdk
+        ${LIBUSB_LIBRARIES}
+        ${FFMPEG_LIBRARIES}
+        ${OPUS_LIBRARIES}
+        pthread
+        m
+)
 
 # Install static libraries
 if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
@@ -264,7 +264,19 @@ else()
 endif()
 
 # Install include files
-install(DIRECTORY
-    psdk_core/psdk_lib/include/
-    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+file(GLOB_RECURSE DJI_ALL_HEADERS
+    psdk_core/psdk_lib/include/*.h
+    psdk_platform/C/platform/common/**/*.h
+    psdk_platform/C/platform/${PSDK_PLATFORM_DIR}/hal/*.h
+)
+
+# headers -> include
+install(FILES ${DJI_ALL_HEADERS}
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
+
+# DJI core archive -> lib
+install(FILES
+  "${PSDK_CORE_LIB_DIR}/libpayloadsdk.a"
+  DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
