@@ -29,11 +29,12 @@ else()
 endif()
 
 # C source directories
-set(PSDK_CORE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/psdk_core/psdk_lib/include")
-set(PSDK_C_MODULES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/psdk_platform/C/module_sample")
-set(PSDK_C_COMMON_DIR "${CMAKE_CURRENT_SOURCE_DIR}/psdk_platform/C/platform/common")
-set(PSDK_C_HAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/psdk_platform/C/platform/${PSDK_PLATFORM_DIR}/hal")
-set(PSDK_C_APP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/psdk_platform/C/platform/${PSDK_PLATFORM_DIR}/application")
+set(PSDK_CORE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Payload-SDK/psdk_lib/include")
+set(PSDK_C_MODULES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Payload-SDK/samples/sample_c/module_sample")
+set(PSDK_C_COMMON_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Payload-SDK/samples/sample_c/platform/linux/common")
+set(PSDK_C_HAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/hal")
+set(PSDK_C_APP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/application")
+
 # C source files
 file(GLOB_RECURSE PSDK_C_MODULES_SOURCES
     "${PSDK_C_MODULES_DIR}/utils/*.c"
@@ -49,29 +50,30 @@ file(GLOB_RECURSE PSDK_C_APP_SOURCES
 )
 
 # C++ source directories
-set(PSDK_CPP_MODULES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/psdk_platform/C++/module_sample")
-set(PSDK_CPP_COMMON_DIR "${CMAKE_CURRENT_SOURCE_DIR}/psdk_platform/C++/platform/common")
-set(PSDK_CPP_HAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/psdk_platform/C++/platform/${PSDK_PLATFORM_DIR}/hal")
-set(PSDK_CPP_APP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/psdk_platform/C++/platform/${PSDK_PLATFORM_DIR}/application")
+# set(PSDK_CPP_MODULES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Payload-SDK/samples/sample_c++/module_sample")
+# set(PSDK_CPP_COMMON_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Payload-SDK/samples/sample_c++/platform/linux/common")
+# set(PSDK_CPP_HAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Payload-SDK/samples/sample_c++/platform/linux/${PSDK_PLATFORM_DIR}/hal")
+# set(PSDK_CPP_APP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Payload-SDK/samples/sample_c++/platform/linux/${PSDK_PLATFORM_DIR}/application")
+
 # C++ source files
-if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
-    file(GLOB_RECURSE PSDK_CPP_MODULES_SOURCES
-        "${PSDK_CPP_MODULES_DIR}/utils/*.c"
-        "${PSDK_CPP_MODULES_DIR}/utils/*.cpp"
-    )
-    file(GLOB_RECURSE PSDK_CPP_COMMON_SOURCES
-        "${PSDK_CPP_COMMON_DIR}/*.c"
-        "${PSDK_CPP_COMMON_DIR}/*.cpp"
-    )
-    file(GLOB_RECURSE PSDK_CPP_HAL_SOURCES
-        "${PSDK_CPP_HAL_DIR}/*.c"
-        "${PSDK_CPP_HAL_DIR}/*.cpp"
-    )
-    file(GLOB_RECURSE PSDK_CPP_APP_SOURCES
-        "${PSDK_CPP_APP_DIR}/*.c"
-        "${PSDK_CPP_APP_DIR}/*.cpp"
-    )
-endif()
+# if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
+#     file(GLOB_RECURSE PSDK_CPP_MODULES_SOURCES
+#         "${PSDK_CPP_MODULES_DIR}/utils/*.c"
+#         "${PSDK_CPP_MODULES_DIR}/utils/*.cpp"
+#     )
+#     file(GLOB_RECURSE PSDK_CPP_COMMON_SOURCES
+#         "${PSDK_CPP_COMMON_DIR}/*.c"
+#         "${PSDK_CPP_COMMON_DIR}/*.cpp"
+#     )
+#     file(GLOB_RECURSE PSDK_CPP_HAL_SOURCES
+#         "${PSDK_CPP_HAL_DIR}/*.c"
+#         "${PSDK_CPP_HAL_DIR}/*.cpp"
+#     )
+#     file(GLOB_RECURSE PSDK_CPP_APP_SOURCES
+#         "${PSDK_CPP_APP_DIR}/*.c"
+#         "${PSDK_CPP_APP_DIR}/*.cpp"
+#     )
+# endif()
 
 # Create static libraries
 add_library(psdk_vendor_c STATIC
@@ -80,16 +82,17 @@ add_library(psdk_vendor_c STATIC
     ${PSDK_C_HAL_SOURCES}
     ${PSDK_C_APP_SOURCES}
 )
-# add_dependencies(psdk_vendor_c ${catkin_EXPORTED_TARGETS})
-if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
-    add_library(psdk_vendor_cpp STATIC
-        ${PSDK_CPP_MODULES_SOURCES}
-        ${PSDK_CPP_COMMON_SOURCES}
-        ${PSDK_CPP_HAL_SOURCES}
-        ${PSDK_CPP_APP_SOURCES}
-    )
-    # add_dependencies(psdk_vendor_cpp ${catkin_EXPORTED_TARGETS})
-endif()
+add_dependencies(psdk_vendor_c ${catkin_EXPORTED_TARGETS})
+
+# if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
+#     add_library(psdk_vendor_cpp STATIC
+#         ${PSDK_CPP_MODULES_SOURCES}
+#         ${PSDK_CPP_COMMON_SOURCES}
+#         ${PSDK_CPP_HAL_SOURCES}
+#         ${PSDK_CPP_APP_SOURCES}
+#     )
+#     # add_dependencies(psdk_vendor_cpp ${catkin_EXPORTED_TARGETS})
+# endif()
 
 # Include directories
 target_include_directories(psdk_vendor_c
@@ -101,23 +104,23 @@ target_include_directories(psdk_vendor_c
         ${PSDK_C_COMMON_DIR}
         ${PSDK_C_HAL_DIR}
 )
-if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
-    target_include_directories(psdk_vendor_cpp
-        PRIVATE
-            ${PSDK_CPP_MODULES_DIR}
-            ${PSDK_CPP_APP_DIR}
-        PUBLIC
-            ${PSDK_CORE_DIR}
-            ${PSDK_CPP_COMMON_DIR}
-            ${PSDK_CPP_HAL_DIR}
-    )
-endif()
+# if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
+#     target_include_directories(psdk_vendor_cpp
+#         PRIVATE
+#             ${PSDK_CPP_MODULES_DIR}
+#             ${PSDK_CPP_APP_DIR}
+#         PUBLIC
+#             ${PSDK_CORE_DIR}
+#             ${PSDK_CPP_COMMON_DIR}
+#             ${PSDK_CPP_HAL_DIR}
+#     )
+# endif()
 
 # Imported libraries
 if (CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
-    set(PSDK_CORE_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/psdk_core/psdk_lib/lib/aarch64-linux-gnu-gcc")
+    set(PSDK_CORE_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Payload-SDK/psdk_lib/lib/aarch64-linux-gnu-gcc")
 elseif (CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
-    set(PSDK_CORE_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/psdk_core/psdk_lib/lib/x86_64-linux-gnu-gcc")
+    set(PSDK_CORE_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Payload-SDK/psdk_lib/lib/x86_64-linux-gnu-gcc")
 else()
     message(FATAL_ERROR "Unsupported architecture: ${CMAKE_SYSTEM_PROCESSOR}")
 endif()
@@ -140,28 +143,21 @@ target_link_libraries(psdk_vendor_c
     PUBLIC
         payloadsdk
 )
-if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
-    target_link_libraries(psdk_vendor_cpp
-        PUBLIC
-            payloadsdk
-    )
-endif()
+# if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
+#     target_link_libraries(psdk_vendor_cpp
+#         PUBLIC
+#             payloadsdk
+#     )
+# endif()
 
-# Link system libraries
-target_link_libraries(psdk_vendor_c
-    PUBLIC
-        pthread
-        m
-        usb-1.0
-)
-if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
-    target_link_libraries(psdk_vendor_cpp
-        PUBLIC
-            pthread
-            m
-            usb-1.0
-    )
-endif()
+# if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
+#     target_link_libraries(psdk_vendor_cpp
+#         PUBLIC
+#             pthread
+#             m
+#             usb-1.0
+#     )
+# endif()
 
 pkg_check_modules(FFMPEG REQUIRED
     libavcodec
@@ -202,11 +198,11 @@ endif()
 target_link_libraries(psdk_vendor_c PUBLIC ${FFMPEG_LIBRARIES})
 target_include_directories(psdk_vendor_c PUBLIC ${FFMPEG_INCLUDE_DIRS})
 target_compile_definitions(psdk_vendor_c PUBLIC FFMPEG_INSTALLED)
-if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
-    target_link_libraries(psdk_vendor_cpp PUBLIC ${FFMPEG_LIBRARIES})
-    target_include_directories(psdk_vendor_cpp PUBLIC ${FFMPEG_INCLUDE_DIRS})
-    target_compile_definitions(psdk_vendor_cpp PUBLIC FFMPEG_INSTALLED)
-endif ()
+# if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
+#     target_link_libraries(psdk_vendor_cpp PUBLIC ${FFMPEG_LIBRARIES})
+#     target_include_directories(psdk_vendor_cpp PUBLIC ${FFMPEG_INCLUDE_DIRS})
+#     target_compile_definitions(psdk_vendor_cpp PUBLIC FFMPEG_INSTALLED)
+# endif ()
 
 pkg_check_modules(OPUS REQUIRED opus)
 message(STATUS "Found OPUS installed in the system")
@@ -216,11 +212,11 @@ message(STATUS " - Libraries: ${OPUS_LIBRARIES}")
 target_link_libraries(psdk_vendor_c PUBLIC ${OPUS_LIBRARIES})
 target_include_directories(psdk_vendor_c PUBLIC ${OPUS_INCLUDE_DIRS})
 target_compile_definitions(psdk_vendor_c PUBLIC OPUS_INSTALLED)
-if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
-    target_link_libraries(psdk_vendor_cpp PUBLIC ${OPUS_LIBRARIES})
-    target_include_directories(psdk_vendor_cpp PUBLIC ${OPUS_INCLUDE_DIRS})
-    target_compile_definitions(psdk_vendor_cpp PUBLIC OPUS_INSTALLED)
-endif ()
+# if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
+#     target_link_libraries(psdk_vendor_cpp PUBLIC ${OPUS_LIBRARIES})
+#     target_include_directories(psdk_vendor_cpp PUBLIC ${OPUS_INCLUDE_DIRS})
+#     target_compile_definitions(psdk_vendor_cpp PUBLIC OPUS_INSTALLED)
+# endif ()
 
 pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
 message(STATUS "Found LIBUSB installed in the system")
@@ -230,49 +226,99 @@ message(STATUS " - Libraries: ${LIBUSB_LIBRARIES}")
 target_link_libraries(psdk_vendor_c PUBLIC ${LIBUSB_LIBRARIES})
 target_include_directories(psdk_vendor_c PUBLIC ${LIBUSB_INCLUDE_DIRS})
 target_compile_definitions(psdk_vendor_c PUBLIC LIBUSB_INSTALLED)
-if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
-    target_link_libraries(psdk_vendor_cpp PUBLIC ${LIBUSB_LIBRARIES})
-    target_include_directories(psdk_vendor_cpp PUBLIC ${LIBUSB_INCLUDE_DIRS})   
-    target_compile_definitions(psdk_vendor_cpp PUBLIC LIBUSB_INSTALLED)
-endif ()
+# if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
+#     target_link_libraries(psdk_vendor_cpp PUBLIC ${LIBUSB_LIBRARIES})
+#     target_include_directories(psdk_vendor_cpp PUBLIC ${LIBUSB_INCLUDE_DIRS})   
+#     target_compile_definitions(psdk_vendor_cpp PUBLIC LIBUSB_INSTALLED)
+# endif ()
+
+set(DJI_EXPORT_INCLUDE_DIRS
+  Payload-SDK/psdk_lib/include
+  Payload-SDK/samples/sample_c/platform/linux/common
+  Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/hal
+  Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/application
+  Payload-SDK/samples/sample_c/module_sample
+)
+
+target_include_directories(psdk_vendor_c
+  PUBLIC
+    ${DJI_EXPORT_INCLUDE_DIRS}
+    ${PSDK_CORE_DIR}
+    ${PSDK_C_COMMON_DIR}
+    ${PSDK_C_HAL_DIR}
+)
+
+# Link system libraries
+target_link_libraries(psdk_vendor_c
+    PUBLIC
+        payloadsdk
+        pthread
+        m
+        dl
+        usb-1.0
+        ${FFMPEG_LIBRARIES}
+        ${OPUS_LIBRARIES}
+        ${LIBUSB_LIBRARIES}
+)
 
 # Catkin package
 catkin_package(
-    INCLUDE_DIRS .
+    INCLUDE_DIRS ${DJI_EXPORT_INCLUDE_DIRS}
     LIBRARIES 
         psdk_vendor_c
         payloadsdk
+        dl
+        pthread
+        m
         ${LIBUSB_LIBRARIES}
         ${FFMPEG_LIBRARIES}
         ${OPUS_LIBRARIES}
-        pthread
-        m
 )
 
 # Install static libraries
-if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
-    install(TARGETS
-        psdk_vendor_c
-        psdk_vendor_cpp
-        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    )
-else()
-    install(TARGETS
-        psdk_vendor_c
-        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    )
-endif()
-
-# Install include files
-file(GLOB_RECURSE DJI_ALL_HEADERS
-    psdk_core/psdk_lib/include/*.h
-    psdk_platform/C/platform/common/**/*.h
-    psdk_platform/C/platform/${PSDK_PLATFORM_DIR}/hal/*.h
+# if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
+#     install(TARGETS
+#         psdk_vendor_c
+#         psdk_vendor_cpp
+#         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#     )
+# else()
+#     install(TARGETS
+#         psdk_vendor_c
+#         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#     )
+# endif()
+install(TARGETS
+    psdk_vendor_c
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
-# headers -> include
-install(FILES ${DJI_ALL_HEADERS}
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+# Install include files
+# file(GLOB_RECURSE DJI_ALL_HEADERS
+#     Payload-SDK/psdk_lib/include/*.h
+#     Payload-SDK/samples/sample_c/platform/linux/common/**/*.h
+#     Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/hal/*.h
+# )
+
+# # headers -> include
+# install(FILES ${DJI_ALL_HEADERS}
+#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+# )
+
+install(DIRECTORY Payload-SDK/psdk_lib/include/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}/Payload-SDK/psdk_lib/include
+)
+
+install(DIRECTORY Payload-SDK/samples/sample_c/platform/linux/common/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}/Payload-SDK/samples/sample_c/platform/linux/common
+)
+
+install(DIRECTORY Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/hal/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}/Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/hal
+)
+
+install(DIRECTORY Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/application/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}/Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/application
 )
 
 # DJI core archive -> lib

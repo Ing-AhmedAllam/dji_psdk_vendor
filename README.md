@@ -85,6 +85,22 @@ sudo apt-get install -y \
     libopus-dev \
     libusb-1.0-0-dev \
     pkg-config
+
+# Runtime tools + common plugins
+sudo apt install -y \
+  gstreamer1.0-tools \
+  gstreamer1.0-plugins-base \
+  gstreamer1.0-plugins-good \
+  gstreamer1.0-plugins-bad \
+  gstreamer1.0-plugins-ugly \
+  gstreamer1.0-libav
+
+# Dev headers for building C++ (appsrc/appsink + video helpers)
+sudo apt install -y \
+  libgstreamer1.0-dev \
+  libgstreamer-plugins-base1.0-dev \
+  libgstreamer-plugins-good1.0-dev
+
 ```
 
 #### Verify FFmpeg Version:
@@ -92,6 +108,18 @@ sudo apt-get install -y \
 ffmpeg -version
 ```
 **Note**: DJI PSDK requires FFmpeg 4.x. If your system has FFmpeg 5.x or higher, you may need to install FFmpeg 4.x specifically.
+
+#### Verify Gstreamer
+```bash
+gst-inspect-1.0 appsrc | head
+gst-inspect-1.0 appsink | head
+gst-inspect-1.0 h264parse | head
+gst-inspect-1.0 avdec_h264 | head
+```
+**Note**: for Jetson, verify nvv4l2decoder
+```bash
+gst-inspect-1.0 nvv4l2decoder | head
+```
 
 ### 2. Set Platform Configuration
 
