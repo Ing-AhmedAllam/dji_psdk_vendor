@@ -37,7 +37,8 @@ set(PSDK_C_APP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Payload-SDK/samples/sample_c/pla
 
 # C source files
 file(GLOB_RECURSE PSDK_C_MODULES_SOURCES
-    "${PSDK_C_MODULES_DIR}/utils/*.c"
+    # "${PSDK_C_MODULES_DIR}/utils/*.c"
+    "${PSDK_C_MODULES_DIR}/*.c"
 )
 file(GLOB_RECURSE PSDK_C_COMMON_SOURCES
     "${PSDK_C_COMMON_DIR}/*.c"
@@ -125,6 +126,12 @@ else()
     message(FATAL_ERROR "Unsupported architecture: ${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 
+if (CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+  target_compile_definitions(psdk_vendor_c PUBLIC SYSTEM_ARCH_LINUX PLATFORM_ARCH_aarch64=1)
+elseif (CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+  target_compile_definitions(psdk_vendor_c PUBLIC SYSTEM_ARCH_LINUX PLATFORM_ARCH_x86_64=1)
+endif()
+
 if (NOT EXISTS ${PSDK_CORE_LIB_DIR}/libpayloadsdk.a)
     message(FATAL_ERROR
         "DJI Payload SDK core library not found at: ${PSDK_CORE_LIB_DIR}/libpayloadsdk.a\n"
@@ -139,6 +146,12 @@ set(PSDK_PAYLOADSDK_PATH
   "${PSDK_CORE_LIB_DIR}/libpayloadsdk.a"
   CACHE INTERNAL "DJI Payload SDK static library"
 )
+set_target_properties(psdk_vendor_c PROPERTIES
+  C_STANDARD 99
+  C_STANDARD_REQUIRED YES
+)
+target_compile_options(psdk_vendor_c PUBLIC -pthread)
+
 target_link_libraries(psdk_vendor_c
     PUBLIC
         payloadsdk
