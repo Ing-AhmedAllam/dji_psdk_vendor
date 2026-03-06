@@ -245,12 +245,20 @@ target_compile_definitions(psdk_vendor_c PUBLIC LIBUSB_INSTALLED)
 #     target_compile_definitions(psdk_vendor_cpp PUBLIC LIBUSB_INSTALLED)
 # endif ()
 
+# set(DJI_EXPORT_INCLUDE_DIRS
+#   Payload-SDK/psdk_lib/include
+#   Payload-SDK/samples/sample_c/platform/linux/common
+#   Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/hal
+#   Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/application
+#   Payload-SDK/samples/sample_c/module_sample
+# )
+
 set(DJI_EXPORT_INCLUDE_DIRS
-  Payload-SDK/psdk_lib/include
-  Payload-SDK/samples/sample_c/platform/linux/common
-  Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/hal
-  Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/application
-  Payload-SDK/samples/sample_c/module_sample
+  ${CMAKE_CURRENT_SOURCE_DIR}/Payload-SDK/psdk_lib/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/Payload-SDK/samples/sample_c/platform/linux/common
+  ${CMAKE_CURRENT_SOURCE_DIR}/Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/hal
+  ${CMAKE_CURRENT_SOURCE_DIR}/Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/application
+  ${CMAKE_CURRENT_SOURCE_DIR}/Payload-SDK/samples/sample_c/module_sample
 )
 
 target_include_directories(psdk_vendor_c
