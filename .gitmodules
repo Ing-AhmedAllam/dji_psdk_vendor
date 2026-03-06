@@ -1,0 +1,3 @@
+[submodule "Payload-SDK"]
+	path = Payload-SDK
+	url = https://github.com/dji-sdk/Payload-SDK.git
