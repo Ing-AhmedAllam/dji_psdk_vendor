@@ -1,296 +1,216 @@
-# psdk_vendor
+# dji_psdk_vendor
 
-A ROS (Robot Operating System) package that provides vendor libraries and platform-specific implementations for DJI's Payload SDK (PSDK). This package serves as a foundational layer for interfacing with DJI drone platforms.
+`dji_psdk_vendor` is the catkin vendor package for this workspace's DJI Payload SDK integration. It vendors the upstream `Payload-SDK` sources, builds the Linux sample C platform layer into a static library, and exports the headers and archives consumed by [`dji_psdk_ros`](../dji_psdk_ros/README.md).
 
-## Overview
+## What This Package Provides
 
-The `psdk_vendor` package wraps DJI's Payload SDK core libraries and provides platform-specific Hardware Abstraction Layer (HAL) implementations for embedded platforms. It builds static libraries that can be linked against by higher-level ROS packages to enable communication and control of DJI drones.
+- The upstream DJI Payload SDK tree under `Payload-SDK/`
+- A catkin-built static library: `libpsdk_vendor_c.a`
+- The prebuilt DJI core archive for the current architecture: `libpayloadsdk.a`
+- Exported include paths for the DJI core headers and Linux sample platform sources
 
-## Package Structure
+## Repository Layout
 
+```text
+dji_psdk_vendor/
+├── CMakeLists.txt
+├── package.xml
+├── README.md
+└── Payload-SDK/
+    ├── psdk_lib/
+    │   ├── include/
+    │   └── lib/
+    │       ├── aarch64-linux-gnu-gcc/
+    │       └── x86_64-linux-gnu-gcc/
+    └── samples/
+        ├── sample_c/
+        │   ├── module_sample/
+        │   └── platform/linux/
+        │       ├── common/
+        │       ├── manifold2/
+        │       └── nvidia_jetson/
+        └── sample_c++/
+            └── platform/linux/
+                ├── manifold2/
+                └── nvidia_jetson/
 ```
-psdk_vendor/
-├── psdk_core/              # DJI Payload SDK core libraries
-│   └── psdk_lib/           # Pre-compiled PSDK libraries and headers
-│       ├── include/        # PSDK header files
-│       └── lib/            # Platform-specific libraries
-│           ├── aarch64-linux-gnu-gcc/    # ARM64 libraries
-│           └── x86_64-linux-gnu-gcc/     # x86_64 libraries
-├── psdk_platform/          # Platform-specific implementations
-│   ├── C/                  # C implementation
-│   │   ├── module_sample/  # Sample modules and utilities
-│   │   └── platform/       # Platform HAL implementations
-│   │       ├── common/     # Common platform code
-│   │       ├── raspberry_pi/   # Raspberry Pi specific code
-│   │       └── nvidia_jetson/  # NVIDIA Jetson specific code
-│   └── C++/                # C++ implementation (Jetson only)
-│       ├── module_sample/  # Sample modules and utilities
-│       └── platform/       # Platform HAL implementations
-│           ├── common/     # Common platform code
-│           └── nvidia_jetson/  # NVIDIA Jetson specific code
-├── CMakeLists.txt          # Build configuration
-└── package.xml             # ROS package manifest
-```
+
+## Current Build Behavior
+
+The current `CMakeLists.txt` builds only the C vendor library:
+
+- `psdk_vendor_c`
+
+The older C++ vendor target is still visible in commented code, but it is not built or installed by this package today.
+
+The package also installs:
+
+- `Payload-SDK/psdk_lib/include/...`
+- `Payload-SDK/samples/sample_c/platform/linux/common/...`
+- `Payload-SDK/samples/sample_c/platform/linux/<platform>/hal/...`
+- `Payload-SDK/samples/sample_c/platform/linux/<platform>/application/...`
+- `libpayloadsdk.a`
 
 ## Supported Platforms
 
-### Primary Platforms
-- **NVIDIA Jetson**: Full support (C and C++ libraries)
-  - Jetson Nano
+### Architecture
 
-- **Raspberry Pi**: C library support only
-  - Raspberry Pi 4
+- `aarch64`
+- `x86_64`
 
-### Architectures
-- **ARM64 (aarch64)**: For Jetson and Raspberry Pi platforms
-- **x86_64**: For development and testing on desktop systems
+### Platform Selection
+
+Set `PSDK_PLATFORM` at configure time:
+
+```bash
+catkin build dji_psdk_vendor --cmake-args -DPSDK_PLATFORM=nvidia_jetson
+```
+
+### Important Note About Platform Names
+
+This checkout currently contains Linux sample directories for:
+
+- `nvidia_jetson`
+- `manifold2`
+
+The package `CMakeLists.txt` still advertises `raspberry_pi`, but there is no matching `Payload-SDK/samples/sample_c/platform/linux/raspberry_pi/` directory in this repository. In practice, the documented and working target in this workspace is `nvidia_jetson`.
 
 ## Dependencies
 
-### System Dependencies
-The package requires the following system libraries:
+Install the system packages required by `dji_psdk_vendor`:
 
-- **FFmpeg 4.x**: Video encoding/decoding
-  - `libavcodec`
-  - `libavformat`
-  - `libavutil`
-  - `libswscale`
-  
-- **OPUS**: Audio codec library
-  - `libopus`
-  
-- **libusb-1.0**: USB device communication
-  
-- **pthread**: POSIX threads
-- **Standard math library (m)**
-
-### Build Dependencies
-- **CMake** >= 3.0.2
-- **catkin**: ROS build system
-- **pkg-config**: For finding system libraries
-- **GCC/G++**: C/C++ compiler toolchain
-
-## Installation
-
-### 1. Install System Dependencies
-
-#### On Ubuntu/Debian:
 ```bash
 sudo apt-get update
 sudo apt-get install -y \
-    libavcodec-dev \
-    libavformat-dev \
-    libavutil-dev \
-    libswscale-dev \
-    libopus-dev \
-    libusb-1.0-0-dev \
-    pkg-config
-
-# Runtime tools + common plugins
-sudo apt install -y \
-  gstreamer1.0-tools \
-  gstreamer1.0-plugins-base \
-  gstreamer1.0-plugins-good \
-  gstreamer1.0-plugins-bad \
-  gstreamer1.0-plugins-ugly \
-  gstreamer1.0-libav
-
-# Dev headers for building C++ (appsrc/appsink + video helpers)
-sudo apt install -y \
-  libgstreamer1.0-dev \
-  libgstreamer-plugins-base1.0-dev \
-  libgstreamer-plugins-good1.0-dev
-
+  ffmpeg \
+  libavcodec-dev \
+  libavformat-dev \
+  libavutil-dev \
+  libswscale-dev \
+  libopus-dev \
+  libusb-1.0-0-dev \
+  pkg-config
 ```
 
-#### Verify FFmpeg Version:
+### FFmpeg Version
+
+This package checks the installed FFmpeg major version at configure time and requires FFmpeg 4.x.
+
+Verify your version with:
+
 ```bash
 ffmpeg -version
 ```
-**Note**: DJI PSDK requires FFmpeg 4.x. If your system has FFmpeg 5.x or higher, you may need to install FFmpeg 4.x specifically.
 
-#### Verify Gstreamer
-```bash
-gst-inspect-1.0 appsrc | head
-gst-inspect-1.0 appsink | head
-gst-inspect-1.0 h264parse | head
-gst-inspect-1.0 avdec_h264 | head
-```
-**Note**: for Jetson, verify nvv4l2decoder
-```bash
-gst-inspect-1.0 nvv4l2decoder | head
-```
+## Build
 
-### 2. Set Platform Configuration
-
-Before building, you must specify your target platform:
-
-```bash
-# For NVIDIA Jetson
-export PSDK_PLATFORM=nvidia_jetson
-
-# For Raspberry Pi
-export PSDK_PLATFORM=raspberry_pi
-```
-
-Alternatively, you can set the platform during the CMake configuration:
-```bash
-catkin build psdk_vendor -DPSDK_PLATFORM=nvidia_jetson
-```
-
-### 3. Build the Package
-
-Navigate to your catkin workspace and build:
+From the workspace root:
 
 ```bash
 cd ~/ros/tendroids_ws
 catkin config --install
-catkin build psdk_vendor
+catkin build dji_psdk_vendor --cmake-args -DPSDK_PLATFORM=nvidia_jetson
+source install/setup.bash
 ```
 
-Or build the entire workspace:
-```bash
-catkin build
-```
+To rebuild the whole workspace with the same platform setting, pass the same CMake argument when needed:
 
-### 4. Source the Workspace
-
-After building, source the workspace:
 ```bash
-source devel/setup.bash
+catkin build --cmake-args -DPSDK_PLATFORM=nvidia_jetson
 ```
 
 ## Build Outputs
 
-The package produces the following static libraries:
+After a successful build/install, the main artifacts are:
 
-### For All Platforms:
-- **`libpsdk_vendor_c.a`**: C implementation of PSDK platform layer
+- `install/lib/libpsdk_vendor_c.a`
+- `install/lib/libpayloadsdk.a`
+- `install/include/dji_psdk_vendor/Payload-SDK/...`
 
-### For NVIDIA Jetson Only:
-- **`libpsdk_vendor_cpp.a`**: C++ implementation of PSDK platform layer
+## Configuration Files
 
-### Installed Components:
-- Static libraries: `devel/lib/libpsdk_vendor_*.a`
-- Header files: `devel/include/` (PSDK core headers)
+For the Jetson sample platform, the main SDK configuration files are:
 
-## Usage
+- `Payload-SDK/samples/sample_c/platform/linux/nvidia_jetson/application/dji_sdk_app_info.h`
+- `Payload-SDK/samples/sample_c/platform/linux/nvidia_jetson/application/dji_sdk_config.h`
 
-### Linking in Other ROS Packages
+Update these files with your app credentials and platform-specific settings before running against real hardware.
 
-To use `psdk_vendor` in your ROS package:
+## Using From Another Catkin Package
 
-#### 1. Add dependency in `package.xml`:
+In `package.xml`:
+
 ```xml
-<depend>psdk_vendor</depend>
+<depend>dji_psdk_vendor</depend>
 ```
 
-#### 2. Update `CMakeLists.txt`:
+In `CMakeLists.txt`:
+
 ```cmake
 find_package(catkin REQUIRED COMPONENTS
-    psdk_vendor
+  dji_psdk_vendor
 )
 
-catkin_package(
-    CATKIN_DEPENDS psdk_vendor
+include_directories(
+  ${catkin_INCLUDE_DIRS}
 )
 
-# Link against the vendor libraries
 target_link_libraries(your_node
-    ${catkin_LIBRARIES}
+  ${catkin_LIBRARIES}
 )
 ```
 
-### Including Headers
+Typical includes from consumer code look like:
 
-The PSDK headers are available after building:
 ```cpp
-#include <dji_core.h>
-#include <dji_flight_controller.h>
-// ... other PSDK headers
+#include "dji_core.h"
+#include "dji_flight_controller.h"
+#include "dji_platform.h"
 ```
-
-## Platform-Specific Notes
-
-### Raspberry Pi
-- **C++ support is NOT available** on Raspberry Pi
-- Only the `psdk_vendor_c` library is built
-- Ensure you have sufficient memory for compilation (consider using swap if needed)
-
-### NVIDIA Jetson
-- Both C and C++ implementations are available
-- Recommended for advanced PSDK features
-- Ensure CUDA toolkit is installed for GPU-accelerated operations (if needed by your application)
-
-### CI/CD Environment
-- In CI environments, the platform defaults to `raspberry_pi` if `PSDK_PLATFORM` is not explicitly set
-- Override this by setting the `PSDK_PLATFORM` environment variable
-
-## Configuration
-
-### SDK Configuration Files
-
-Platform-specific SDK configurations are located in:
-- Raspberry Pi: `psdk_platform/C/platform/raspberry_pi/application/dji_sdk_config.h`
-- NVIDIA Jetson: `psdk_platform/C++/platform/nvidia_jetson/application/dji_sdk_app_info.h`
-
-Modify these files to configure:
-- Application credentials
-- Network settings
-- Platform-specific parameters
 
 ## Troubleshooting
 
-### Common Issues
+### `PSDK_PLATFORM is not set`
 
-#### 1. `PSDK_PLATFORM is not set`
-**Error**: `PSDK_PLATFORM is not set. Please set it to your target platform`
+Configure with an explicit platform:
 
-**Solution**: Set the environment variable:
 ```bash
-export PSDK_PLATFORM=nvidia_jetson  # or raspberry_pi
+catkin build dji_psdk_vendor --cmake-args -DPSDK_PLATFORM=nvidia_jetson
 ```
 
-#### 2. FFmpeg Version Mismatch
-**Error**: `Unsupported FFMPEG version: X.x — DJI requires 4.x.x`
+### `Unsupported FFMPEG version`
 
-**Solution**: Install FFmpeg 4.x:
+The configure step only accepts FFmpeg 4.x. Check the installed version:
+
 ```bash
-sudo apt-get install -y ffmpeg=7:4.*
+ffmpeg -version
 ```
 
-#### 3. Missing DJI Core Library
-**Error**: `DJI Payload SDK core library not found`
+### `DJI Payload SDK core library not found`
 
-**Solution**: Ensure the `psdk_core/psdk_lib/lib/` directory contains the appropriate library for your architecture.
+Make sure the matching archive exists for your CPU:
 
-#### 4. Unsupported Architecture
-**Error**: `Unsupported architecture: <arch>`
+- `Payload-SDK/psdk_lib/lib/aarch64-linux-gnu-gcc/libpayloadsdk.a`
+- `Payload-SDK/psdk_lib/lib/x86_64-linux-gnu-gcc/libpayloadsdk.a`
 
-**Solution**: This package supports only `aarch64` and `x86_64`. Verify your system architecture:
+### `Unsupported architecture`
+
+This package only accepts:
+
+- `aarch64`
+- `x86_64`
+
+Check your machine with:
+
 ```bash
 uname -m
 ```
 
-## Development
+## Version
 
-### Directory Organization
-
-- **Module samples**: Sample implementations are in `psdk_platform/[C|C++]/module_sample/`
-- **HAL implementations**: Hardware abstraction in `psdk_platform/[C|C++]/platform/<platform>/hal/`
-- **Application code**: Platform entry points in `psdk_platform/[C|C++]/platform/<platform>/application/`
-
-### Adding Custom Modules
-
-1. Place source files in the appropriate `module_sample/` directory
-2. HAL implementations go in `platform/<platform>/hal/`
-3. Rebuild the package with `catkin build psdk_vendor`
-
-## Version Information
-
-- **Package Version**: 0.0.0
-- **ROS Package Format**: 2
-- **CMake Minimum Version**: 3.0.2
+- Package version: `0.0.0`
+- Package format: `2`
+- Minimum CMake version: `3.0.2`
 
 ## License
 
@@ -298,24 +218,4 @@ MIT
 
 ## Maintainer
 
-- **Eng. Ahmed Allam** - ahmed.18allam@gmail.com
-
-## Contributing
-
-When contributing to this package:
-1. Ensure code compiles on both supported platforms (if applicable)
-2. Test with the target hardware platform
-3. Update documentation for any new features or changes
-4. Follow ROS best practices and coding standards
-
-## Additional Resources
-
-- [DJI Payload SDK Documentation](https://developer.dji.com/payload-sdk/)
-- [ROS Wiki](http://wiki.ros.org/)
-- [Catkin Build System](https://catkin-tools.readthedocs.io/)
-
-## Support
-
-For issues specific to this package, please contact the maintainer.
-
-For DJI PSDK-related questions, refer to the [DJI Developer Forum](https://forum.dji.com/forum-139-1.html).
+Ahmed Allam - `ahmed.18allam@gmail.com`
