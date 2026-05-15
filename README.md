@@ -75,7 +75,7 @@ This checkout currently contains Linux sample directories for:
 
 The package `CMakeLists.txt` still advertises `raspberry_pi`, but there is no matching `Payload-SDK/samples/sample_c/platform/linux/raspberry_pi/` directory in this repository.
 
-The bundled `nvidia_jetson` HAL sources are mostly generic Linux USB, UART, and network code rather than obviously Jetson-only code, so Raspberry Pi may be able to work with the same source set. However, this repository does not currently map `raspberry_pi` to the `nvidia_jetson` sample path, and Raspberry Pi support is not validated by the current build files. In practice, the documented and tested path in this workspace is still `nvidia_jetson`.
+The bundled `nvidia_jetson` HAL sources are mostly generic Linux USB, UART, and network code rather than obviously Jetson-only code, so Raspberry Pi may be able to work with the same source set. However, this repository does not currently map `raspberry_pi` to the `nvidia_jetson` sample path, and Raspberry Pi support is not validated by the current build files. In practice, the documented and tested path in this repository is still `nvidia_jetson`.
 
 ## Dependencies
 
@@ -109,7 +109,7 @@ ffmpeg -version
 From the workspace root:
 
 ```bash
-cd ~/ros/tendroids_ws
+cd ~/catkin_ws
 rosdep install --from-paths src --ignore-src -r -y && catkin config --install --cmake-args -DPSDK_PLATFORM=nvidia_jetson -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release && catkin build
 source install/setup.bash
 ```
