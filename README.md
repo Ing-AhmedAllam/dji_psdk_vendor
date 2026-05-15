@@ -60,10 +60,10 @@ The package also installs:
 
 ### Platform Selection
 
-Set `PSDK_PLATFORM` at configure time:
+This workspace currently builds the vendor package with:
 
 ```bash
-catkin build dji_psdk_vendor --cmake-args -DPSDK_PLATFORM=nvidia_jetson
+PSDK_PLATFORM=nvidia_jetson
 ```
 
 ### Important Note About Platform Names
@@ -73,7 +73,9 @@ This checkout currently contains Linux sample directories for:
 - `nvidia_jetson`
 - `manifold2`
 
-The package `CMakeLists.txt` still advertises `raspberry_pi`, but there is no matching `Payload-SDK/samples/sample_c/platform/linux/raspberry_pi/` directory in this repository. In practice, the documented and working target in this workspace is `nvidia_jetson`.
+The package `CMakeLists.txt` still advertises `raspberry_pi`, but there is no matching `Payload-SDK/samples/sample_c/platform/linux/raspberry_pi/` directory in this repository.
+
+The bundled `nvidia_jetson` HAL sources are mostly generic Linux USB, UART, and network code rather than obviously Jetson-only code, so Raspberry Pi may be able to work with the same source set. However, this repository does not currently map `raspberry_pi` to the `nvidia_jetson` sample path, and Raspberry Pi support is not validated by the current build files. In practice, the documented and tested path in this workspace is still `nvidia_jetson`.
 
 ## Dependencies
 
@@ -108,16 +110,16 @@ From the workspace root:
 
 ```bash
 cd ~/ros/tendroids_ws
-catkin config --install
-catkin build dji_psdk_vendor --cmake-args -DPSDK_PLATFORM=nvidia_jetson
+rosdep install --from-paths src --ignore-src -r -y && catkin config --install --cmake-args -DPSDK_PLATFORM=nvidia_jetson -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release && catkin build
 source install/setup.bash
 ```
 
-To rebuild the whole workspace with the same platform setting, pass the same CMake argument when needed:
+This configures the workspace to:
 
-```bash
-catkin build --cmake-args -DPSDK_PLATFORM=nvidia_jetson
-```
+- install missing ROS/system dependencies with `rosdep`
+- build against `PSDK_PLATFORM=nvidia_jetson`
+- export `compile_commands.json`
+- use `Release` mode
 
 ## Build Outputs
 
@@ -175,7 +177,7 @@ Typical includes from consumer code look like:
 Configure with an explicit platform:
 
 ```bash
-catkin build dji_psdk_vendor --cmake-args -DPSDK_PLATFORM=nvidia_jetson
+catkin config --install --cmake-args -DPSDK_PLATFORM=nvidia_jetson -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release
 ```
 
 ### `Unsupported FFMPEG version`
@@ -214,8 +216,29 @@ uname -m
 
 ## License
 
-MIT
+- Package manifest license: `MIT`
+- Vendored upstream SDK files also include DJI-provided license and notice files under `Payload-SDK/`, especially `Payload-SDK/LICENSE.txt` and `Payload-SDK/EULA.txt`
 
 ## Maintainer
 
 Ahmed Allam - `ahmed.18allam@gmail.com`
+
+## Contributing
+
+When contributing to this package:
+
+1. Keep the README aligned with the actual `CMakeLists.txt` and packaged `Payload-SDK` tree.
+2. Validate changes on the target hardware and architecture you are building for.
+3. Document any platform-specific assumptions, especially around `PSDK_PLATFORM`.
+4. Avoid claiming support for a platform unless the repository layout and build logic actually support it.
+
+## Support
+
+For package-specific questions or maintenance, contact:
+
+- Ahmed Allam - `ahmed.18allam@gmail.com`
+
+For DJI Payload SDK questions beyond this catkin wrapper, refer to:
+
+- DJI Payload SDK Documentation: <https://developer.dji.com/payload-sdk/>
+- DJI Developer Forum: <https://forum.dji.com/forum-139-1.html>
