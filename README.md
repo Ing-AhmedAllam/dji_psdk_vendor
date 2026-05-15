@@ -110,7 +110,13 @@ From the workspace root:
 
 ```bash
 cd ~/catkin_ws
-rosdep install --from-paths src --ignore-src -r -y && catkin config --install --cmake-args -DPSDK_PLATFORM=nvidia_jetson -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release && catkin build
+rosdep install --from-paths src --ignore-src -r -y && \
+catkin config --install \
+  --cmake-args \
+  -DPSDK_PLATFORM=nvidia_jetson \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+  -DCMAKE_BUILD_TYPE=Release && \
+catkin build
 source install/setup.bash
 ```
 
