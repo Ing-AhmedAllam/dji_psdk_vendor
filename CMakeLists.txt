@@ -200,12 +200,12 @@ endif()
 
 set(FFMPEG_MAJOR_VERSION "${CMAKE_MATCH_1}")
 
-if (NOT FFMPEG_MAJOR_VERSION STREQUAL "4")
+if (FFMPEG_MAJOR_VERSION LESS 3)
     message(FATAL_ERROR
-        "Unsupported FFMPEG version: ${FFMPEG_MAJOR_VERSION}.x — DJI requires 4.x.x"
+        "Unsupported FFMPEG version: ${FFMPEG_MAJOR_VERSION}.x — need at least 3.x"
     )
 else()
-    message(STATUS " - FFMPEG version: ${FFMPEG_MAJOR_VERSION}.x")
+    message(WARNING " - FFMPEG version: ${FFMPEG_MAJOR_VERSION}.x accepted on Melodic/Bionic")
 endif()
 
 target_link_libraries(psdk_vendor_c PUBLIC ${FFMPEG_LIBRARIES})

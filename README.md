@@ -106,9 +106,12 @@ ffmpeg -version
 
 ## Build
 
-From the workspace root:
+From a fresh workspace:
 
 ```bash
+mkdir -p ~/catkin_ws/src
+cd ~/catkin_ws/src
+git clone --recursive git@github.com:Ing-AhmedAllam/dji_psdk_vendor.git
 cd ~/catkin_ws
 rosdep install --from-paths src --ignore-src -r -y && \
 catkin config --install \
