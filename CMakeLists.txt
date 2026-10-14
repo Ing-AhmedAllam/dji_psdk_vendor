@@ -1,15 +1,13 @@
-cmake_minimum_required(VERSION 3.0.2)
-project(dji_psdk_vendor)
+cmake_minimum_required(VERSION 3.16)
+
+project(dji_psdk_vendor LANGUAGES C CXX)
 
 add_definitions(-D_GNU_SOURCE)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-find_package(catkin REQUIRED)
+find_package(ament_cmake REQUIRED)
 find_package(PkgConfig REQUIRED)
 
 set(PSDK_PLATFORM "" CACHE STRING "Target platform: raspberry_pi or nvidia_jetson")
@@ -37,16 +35,20 @@ set(PSDK_C_APP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Payload-SDK/samples/sample_c/pla
 
 # C source files
 file(GLOB_RECURSE PSDK_C_MODULES_SOURCES
+    CONFIGURE_DEPENDS
     # "${PSDK_C_MODULES_DIR}/utils/*.c"
     "${PSDK_C_MODULES_DIR}/*.c"
 )
 file(GLOB_RECURSE PSDK_C_COMMON_SOURCES
+    CONFIGURE_DEPENDS
     "${PSDK_C_COMMON_DIR}/*.c"
 )
 file(GLOB_RECURSE PSDK_C_HAL_SOURCES
+    CONFIGURE_DEPENDS
     "${PSDK_C_HAL_DIR}/*.c"
 )
 file(GLOB_RECURSE PSDK_C_APP_SOURCES
+    CONFIGURE_DEPENDS
     "${PSDK_C_APP_DIR}/*.c"
 )
 
@@ -83,7 +85,6 @@ add_library(psdk_vendor_c STATIC
     ${PSDK_C_HAL_SOURCES}
     ${PSDK_C_APP_SOURCES}
 )
-add_dependencies(psdk_vendor_c ${catkin_EXPORTED_TARGETS})
 
 # if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
 #     add_library(psdk_vendor_cpp STATIC
@@ -96,15 +97,29 @@ add_dependencies(psdk_vendor_c ${catkin_EXPORTED_TARGETS})
 # endif()
 
 # Include directories
+# Include directories
 target_include_directories(psdk_vendor_c
     PRIVATE
         ${PSDK_C_MODULES_DIR}
         ${PSDK_C_APP_DIR}
+
     PUBLIC
-        ${PSDK_CORE_DIR}
-        ${PSDK_C_COMMON_DIR}
-        ${PSDK_C_HAL_DIR}
+        # Build interface
+        $<BUILD_INTERFACE:${PSDK_CORE_DIR}>
+        $<BUILD_INTERFACE:${PSDK_C_COMMON_DIR}>
+        $<BUILD_INTERFACE:${PSDK_C_HAL_DIR}>
+        $<BUILD_INTERFACE:${PSDK_C_APP_DIR}>
+        $<BUILD_INTERFACE:${PSDK_C_MODULES_DIR}>
+
+        # Install interface
+        $<INSTALL_INTERFACE:include/${PROJECT_NAME}/Payload-SDK/psdk_lib/include>
+        $<INSTALL_INTERFACE:include/${PROJECT_NAME}/Payload-SDK/samples/sample_c/platform/linux/common>
+        $<INSTALL_INTERFACE:include/${PROJECT_NAME}/Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/hal>
+        $<INSTALL_INTERFACE:include/${PROJECT_NAME}/Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/application>
+        $<INSTALL_INTERFACE:include/${PROJECT_NAME}/Payload-SDK/samples/sample_c/module_sample>
 )
+
+# TODO update this for ros2
 # if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
 #     target_include_directories(psdk_vendor_cpp
 #         PRIVATE
@@ -116,6 +131,7 @@ target_include_directories(psdk_vendor_c
 #             ${PSDK_CPP_HAL_DIR}
 #     )
 # endif()
+#end TODO
 
 # Imported libraries
 if (CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
@@ -152,16 +168,6 @@ set_target_properties(psdk_vendor_c PROPERTIES
 )
 target_compile_options(psdk_vendor_c PUBLIC -pthread)
 
-target_link_libraries(psdk_vendor_c
-    PUBLIC
-        payloadsdk
-)
-# if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
-#     target_link_libraries(psdk_vendor_cpp
-#         PUBLIC
-#             payloadsdk
-#     )
-# endif()
 
 # if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
 #     target_link_libraries(psdk_vendor_cpp
@@ -253,21 +259,6 @@ target_compile_definitions(psdk_vendor_c PUBLIC LIBUSB_INSTALLED)
 #   Payload-SDK/samples/sample_c/module_sample
 # )
 
-set(DJI_EXPORT_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}/Payload-SDK/psdk_lib/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/Payload-SDK/samples/sample_c/platform/linux/common
-  ${CMAKE_CURRENT_SOURCE_DIR}/Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/hal
-  ${CMAKE_CURRENT_SOURCE_DIR}/Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/application
-  ${CMAKE_CURRENT_SOURCE_DIR}/Payload-SDK/samples/sample_c/module_sample
-)
-
-target_include_directories(psdk_vendor_c
-  PUBLIC
-    ${DJI_EXPORT_INCLUDE_DIRS}
-    ${PSDK_CORE_DIR}
-    ${PSDK_C_COMMON_DIR}
-    ${PSDK_C_HAL_DIR}
-)
 
 # Link system libraries
 target_link_libraries(psdk_vendor_c
@@ -277,24 +268,21 @@ target_link_libraries(psdk_vendor_c
         m
         dl
         usb-1.0
-        ${FFMPEG_LIBRARIES}
-        ${OPUS_LIBRARIES}
-        ${LIBUSB_LIBRARIES}
 )
 
-# Catkin package
-catkin_package(
-    INCLUDE_DIRS ${DJI_EXPORT_INCLUDE_DIRS}
-    LIBRARIES 
-        psdk_vendor_c
-        payloadsdk
-        dl
-        pthread
-        m
-        ${LIBUSB_LIBRARIES}
-        ${FFMPEG_LIBRARIES}
-        ${OPUS_LIBRARIES}
-)
+# # Catkin package
+# catkin_package(
+#     INCLUDE_DIRS ${DJI_EXPORT_INCLUDE_DIRS}
+#     LIBRARIES 
+#         psdk_vendor_c
+#         payloadsdk
+#         dl
+#         pthread
+#         m
+#         ${LIBUSB_LIBRARIES}
+#         ${FFMPEG_LIBRARIES}
+#         ${OPUS_LIBRARIES}
+# )
 
 # Install static libraries
 # if (PSDK_PLATFORM STREQUAL "nvidia_jetson")
@@ -309,9 +297,14 @@ catkin_package(
 #         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #     )
 # endif()
-install(TARGETS
-    psdk_vendor_c
-    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+
+install(
+    TARGETS psdk_vendor_c
+    EXPORT export_${PROJECT_NAME}
+
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
 )
 
 # Install include files
@@ -326,24 +319,43 @@ install(TARGETS
 #   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 # )
 
-install(DIRECTORY Payload-SDK/psdk_lib/include/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}/Payload-SDK/psdk_lib/include
+install(
+    DIRECTORY Payload-SDK/psdk_lib/include/
+    DESTINATION include/${PROJECT_NAME}/Payload-SDK/psdk_lib/include
 )
 
 install(DIRECTORY Payload-SDK/samples/sample_c/platform/linux/common/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}/Payload-SDK/samples/sample_c/platform/linux/common
+  DESTINATION include/${PROJECT_NAME}/Payload-SDK/samples/sample_c/platform/linux/common
+)
+
+install(
+    DIRECTORY Payload-SDK/samples/sample_c/module_sample/
+    DESTINATION include/${PROJECT_NAME}/Payload-SDK/samples/sample_c/module_sample
+    FILES_MATCHING
+        PATTERN "*.h"
+        PATTERN "*.hpp"
 )
 
 install(DIRECTORY Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/hal/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}/Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/hal
+  DESTINATION include/${PROJECT_NAME}/Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/hal
 )
 
 install(DIRECTORY Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/application/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}/Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/application
+  DESTINATION include/${PROJECT_NAME}/Payload-SDK/samples/sample_c/platform/linux/${PSDK_PLATFORM_DIR}/application
 )
 
 # DJI core archive -> lib
-install(FILES
-  "${PSDK_CORE_LIB_DIR}/libpayloadsdk.a"
-  DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+install(
+    FILES "${PSDK_CORE_LIB_DIR}/libpayloadsdk.a"
+    DESTINATION lib
+)
+
+
+ament_export_targets(
+    export_${PROJECT_NAME}
+    HAS_LIBRARY_TARGET
+)
+
+ament_package(
+    CONFIG_EXTRAS cmake/dji_psdk_vendor-extras.cmake
 )
